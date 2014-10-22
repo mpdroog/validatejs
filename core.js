@@ -106,7 +106,33 @@ define([], function() {
           // Safe to validate
           var validationRules = validators.split(",");
           _methods.forEach(validationRules, function (_, rule) {
+            var args = {};
             rule = rule.trim();
+            if (rule.indexOf("(") > 0 && rule.indexOf(")") > 0) {
+              // TODO: substring cross browser?
+              // TODO: extract to own function?
+              var tmp = rule.substring(
+                rule.indexOf("(")+1,
+                rule.indexOf(")")
+              );
+              rule = rule.substr(0, rule.indexOf("("));
+              tmp.split("|").forEach(function(item) {
+                var sep = item.indexOf("=");
+                if (sep < 0) {
+                  errors.push({
+                    fieldName: ruleName,
+                    reason: "Failed extracting rule key=value",
+                    rule: item,
+                    value: null
+                  });
+                  return;
+                }
+                var key = item.substr(0, sep);
+                var value = item.substr(sep+1);
+                args[key] = value;
+              });
+            }
+
             // Regular validator
             if (rule === "opt") {
               // Ignore this special option
@@ -126,7 +152,7 @@ define([], function() {
               _methods.log(
                 "Ignoring content of %s", ruleName
               );
-            } else if (!_validators[rule](value, {}, input)) {
+            } else if (!_validators[rule](value, args, input)) {
               _methods.log(
                 "Field (%s) INVALID according to rule(%s) for value (%s)",
                 ruleName, rule, value
