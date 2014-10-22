@@ -1,0 +1,22 @@
+{
+  "author": {
+    "name": "Mark Droog",
+    "email": "mpdroog@icloud.com"
+  },
+  "contributors": [],
+  "name": "validatejs",
+  "homepage": "https://github.com/mpdroog/validatejs",
+  "description": "Simple JavaScript input validation",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mpdroog/validatejs.git"
+  },
+  "main": "validate-rules.js",
+  "engines": {
+    "node": ">=0.6"
+  },
+  "dependencies": {
+    "xregexp": "^2.0.0"
+  }
+}

@@ -7,7 +7,7 @@
     : function (A, F) {
     module.exports = F.apply(null, A.map(require))
   }
-});
+}).
 
 define([], function() {
   "use strict";
@@ -159,6 +159,10 @@ define([], function() {
         );
       }
       _validators[name] = fn;
+    },
+
+    getValidators: function() {
+      return _validators;
     }
   };
 
@@ -166,6 +170,7 @@ define([], function() {
   return {
     init: _methods.init,
     validate: _methods.validate,
-    addValidator: _methods.addValidator
+    addValidator: _methods.addValidator,
+    getValidators: _methods.getValidators
   };
 });
