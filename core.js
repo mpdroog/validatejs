@@ -106,18 +106,23 @@ define([], function() {
           // Safe to validate
           var validationRules = validators.split(",");
           _methods.forEach(validationRules, function (_, rule) {
+            rule = rule.trim();
             // Regular validator
             if (rule === "opt") {
               // Ignore this special option
               return;
             }
             if (typeof _validators[rule] === "undefined") {
-              throw new Error(
-                "Validator with name does not exist. Name=" + rule
-              );
+              errors.push({
+                fieldName: ruleName,
+                reason: "No such rule",
+                rule: rule,
+                value: null
+              });
+              return;
             }
             var value = input[ruleName];
-            if (value === null && validationRules.indexOf("opt") >= 0) {
+            if ((value === null || value === "") && validationRules.indexOf("opt") >= 0) {
               _methods.log(
                 "Ignoring content of %s", ruleName
               );
