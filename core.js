@@ -116,7 +116,7 @@ define([], function() {
                 rule.indexOf(")")
               );
               rule = rule.substr(0, rule.indexOf("("));
-              tmp.split("|").forEach(function(item) {
+              _methods.forEach(tmp.split("|"), function(_, item) {
                 var sep = item.indexOf("=");
                 if (sep < 0) {
                   errors.push({
