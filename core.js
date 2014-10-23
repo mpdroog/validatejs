@@ -2,17 +2,32 @@
  * Simple validation.
  */
 ({
+  /**
+   * NodeJS support
+   */
   define: typeof define === "function"
     ? define
     : function (A, F) {
     module.exports = F.apply(null, A.map(require))
   }
 }).
-
 define([], function() {
   "use strict";
   var _validators = [], undefined;
   var _debug = false;
+
+  if (!String.prototype.trim) {
+    /**
+     * JS Shim < JavaScript 1.8.1
+     * Trim whitespace from each end of a String
+     * @returns {String} the original String with whitespace removed from each end
+     * @example
+     * ' foo bar    '.trim(); //'foo bar'
+     */
+    String.prototype.trim = function trim() {
+      return this.toString().replace(/^([\s]*)|([\s]*)$/g, '');
+    };
+  }
 
   var _methods = {
     /**
@@ -77,18 +92,56 @@ define([], function() {
       return _methods.contentValidate(input, rules);
     },
 
+    confParse: function (rules) {
+      var output = {};
+      var errors = [];
+
+      _methods.forEach(rules.split(","), function (_, rule) {
+        var args = {};
+        rule = rule.trim();
+        if (rule.indexOf("(") > 0 && rule.indexOf(")") > 0) {
+          // TODO: substring cross browser?
+          // TODO: extract to own function?
+          var tmp = rule.substring(
+            rule.indexOf("(") + 1,
+            rule.indexOf(")")
+          );
+          rule = rule.substr(0, rule.indexOf("("));
+          _methods.forEach(tmp.split("|"), function (_, item) {
+            var sep = item.indexOf("=");
+            if (sep < 0) {
+              errors.push({
+                fieldName: ruleName,
+                reason: "Failed extracting rule key=value",
+                rule: item,
+                value: null
+              });
+              return;
+            }
+            var key = item.substr(0, sep);
+            var value = item.substr(sep + 1);
+            args[key] = value;
+
+            output[ rule ] = args;
+          });
+        }
+      });
+
+      return [output, errors];
+    },
+
     contentValidate: function (input, rules) {
       var errors = [];
-      _methods.forEach(rules, function (ruleName, validators) {
+      _methods.forEach(rules, function (fieldName, validators) {
         if (typeof validators === 'object') {
           // Sub-rules
-          var subFields = input[ruleName];
+          var subFields = input[fieldName];
           if (subFields.hasOwnProperty('length')) {
             // Array children
             _methods.forEach(subFields, function (_, value) {
               _methods.log(
                 "Validating field (%s) children recursive",
-                ruleName
+                fieldName
               );
               var e = _methods.contentValidate(value, validators);
               if (e.length > 0) {
@@ -104,41 +157,17 @@ define([], function() {
           }
         } else {
           // Safe to validate
-          var validationRules = validators.split(",");
-          _methods.forEach(validationRules, function (_, rule) {
-            var args = {};
-            rule = rule.trim();
-            if (rule.indexOf("(") > 0 && rule.indexOf(")") > 0) {
-              // TODO: substring cross browser?
-              // TODO: extract to own function?
-              var tmp = rule.substring(
-                rule.indexOf("(")+1,
-                rule.indexOf(")")
-              );
-              rule = rule.substr(0, rule.indexOf("("));
-              _methods.forEach(tmp.split("|"), function(_, item) {
-                var sep = item.indexOf("=");
-                if (sep < 0) {
-                  errors.push({
-                    fieldName: ruleName,
-                    reason: "Failed extracting rule key=value",
-                    rule: item,
-                    value: null
-                  });
-                  return;
-                }
-                var key = item.substr(0, sep);
-                var value = item.substr(sep+1);
-                args[key] = value;
-              });
-            }
-
+          var v = _methods.confParse(validators);
+          _methods.forEach(v[1], function(_, e) {
+            errors.push(e);
+          });
+          _methods.forEach(v[0], function (ruleName, rule) {
             // Regular validator
-            if (rule === "opt") {
+            if (ruleName === "opt" || ruleName === "reqif") {
               // Ignore this special option
               return;
             }
-            if (typeof _validators[rule] === "undefined") {
+            if (typeof _validators[ruleName] === "undefined") {
               errors.push({
                 fieldName: ruleName,
                 reason: "No such rule",
@@ -147,28 +176,61 @@ define([], function() {
               });
               return;
             }
-            var value = input[ruleName];
-            if ((value === null || value === "") && validationRules.indexOf("opt") >= 0) {
+            var value = input[fieldName];
+            if ((value === null || value === "") && v[0].hasOwnProperty("opt")) {
               _methods.log(
                 "Ignoring content of %s", ruleName
               );
-            } else if (!_validators[rule](value, args, input)) {
+            } else if (!_validators[ruleName](value, rule, input)) {
+              var ignore = false;
+              // reqif ensures rule is only required to be valid
+              //  if specific field has a value
+              if (v[0].hasOwnProperty("reqif")) {
+                var reqif = v[0].reqif;
+                if (! reqif.hasOwnProperty('role')) {
+                  errors.push({
+                    fieldName: fieldName,
+                    reason: "reqif is missing role-argument",
+                    rule: ruleName,
+                    value: value
+                  });
+                } else {
+                  _methods.forEach(reqif, function(cmpName, cmpVal) {
+                    if (typeof input[cmpName] === "undefined") {
+                      errors.push({
+                        fieldName: fieldName,
+                        reason: "reqif cannot find dependant field",
+                        rule: ruleName,
+                        value: cmpName + "=" + cmpVal
+                      });
+                    } else {
+                      var other = input[cmpName];
+                      if (other !== value) {
+                        // Break here, reqif is not the case
+                        ignore = true;
+                      }
+                    }
+                  });
+                }
+              }
+
+              if (ignore) {
+                return;
+              }
               _methods.log(
                 "Field (%s) INVALID according to rule(%s) for value (%s)",
-                ruleName, rule, value
+                fieldName, ruleName, value
               );
-              var item = {};
-              item[ruleName] = value;
               errors.push({
-                fieldName: ruleName,
+                fieldName: fieldName,
                 reason: "Validation failed",
-                rule: rule,
+                rule: ruleName,
                 value: value
               });
             } else {
               _methods.log(
                 "Field (%s) valid according to rule(%s)",
-                ruleName, rule
+                fieldName, ruleName
               );
             }
           });
