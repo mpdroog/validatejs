@@ -87,17 +87,17 @@ define(["./core", "xregexp"], function (Validate, XReg) {
   Validate.addValidator("money", function (value) {
     return /^[0-9]{1,}\.?[0-9]*$/.test(value);
   });
-  Validate.addValidator("text255", function (value) {
-    return typeof value === 'string' && value.length <= 255;
-  });
-  Validate.addValidator("text100", function (value) {
-    return typeof value === 'string' && value.length <= 100;
-  });
-  Validate.addValidator("text10", function (value) {
-    return typeof value === 'string' && value.length <= 10;
-  });
-  Validate.addValidator("text50", function (value) {
-    return typeof value === 'string' && value.length <= 50;
+  Validate.addValidator("len", function (value, rules) {
+    var ok = 1;
+    ok &= typeof value === 'string';
+
+    if (rules.hasOwnProperty('max')) {
+      ok &= value.length <= rules.max;
+    }
+    if (rules.hasOwnProperty('min')) {
+      ok &= value.length >= rules.min;
+    }
+    return ok === 1;
   });
   Validate.addValidator("country", function (value) {
     return typeof value === 'string' && value.length === 2 && /^[a-zA-Z]{2}$/.test(value);
