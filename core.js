@@ -97,6 +97,7 @@ define([], function() {
       var errors = [];
 
       _methods.forEach(rules.split(","), function (_, rule) {
+        _methods.log("confParse: " + rule);
         var args = {};
         rule = rule.trim();
         if (rule.indexOf("(") > 0 && rule.indexOf(")") > 0) {
@@ -120,11 +121,17 @@ define([], function() {
             }
             var key = item.substr(0, sep);
             var value = item.substr(sep + 1);
+            if (args.hasOwnProperty(key)) {
+              throw "Weird error, duplicate key=" + key;
+            }
             args[key] = value;
-
-            output[ rule ] = args;
           });
         }
+        if (output.hasOwnProperty(rule)) {
+          _methods.log(output[rule], args);
+          throw "Weird error, duplicate key=" + rule;
+        }
+        output[rule] = args;
       });
 
       return [output, errors];
@@ -164,7 +171,7 @@ define([], function() {
           _methods.forEach(v[0], function (ruleName, rule) {
             // Regular validator
             if (ruleName === "opt" || ruleName === "reqif") {
-              // Ignore this special option
+              // No validator so skip (will be used when invalid input)
               return;
             }
             if (typeof _validators[ruleName] === "undefined") {
@@ -187,31 +194,25 @@ define([], function() {
               //  if specific field has a value
               if (v[0].hasOwnProperty("reqif")) {
                 var reqif = v[0].reqif;
-                if (! reqif.hasOwnProperty('role')) {
-                  errors.push({
-                    fieldName: fieldName,
-                    reason: "reqif is missing role-argument",
-                    rule: ruleName,
-                    value: value
-                  });
-                } else {
-                  _methods.forEach(reqif, function(cmpName, cmpVal) {
-                    if (typeof input[cmpName] === "undefined") {
-                      errors.push({
-                        fieldName: fieldName,
-                        reason: "reqif cannot find dependant field",
-                        rule: ruleName,
-                        value: cmpName + "=" + cmpVal
-                      });
-                    } else {
-                      var other = input[cmpName];
-                      if (other !== value) {
-                        // Break here, reqif is not the case
-                        ignore = true;
-                      }
+                _methods.forEach(reqif, function(cmpName, cmpVal) {
+                  if (typeof input[cmpName] === "undefined") {
+                    errors.push({
+                      fieldName: fieldName,
+                      reason: "reqif cannot find dependant field",
+                      rule: ruleName,
+                      value: cmpName + "=" + cmpVal
+                    });
+                  } else {
+                    var other = input[cmpName];
+                    if (other !== value) {
+                      // Break here, reqif is not the case
+                      _methods.log(
+                        "Ignoring reqif value not equals of %s", ruleName
+                      );
+                      ignore = true;
                     }
-                  });
-                }
+                  }
+                });
               }
 
               if (ignore) {
