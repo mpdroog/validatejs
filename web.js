@@ -93,8 +93,10 @@ define(["json!rules", "class", "validateCore", "validateRules"], function (Rules
         return "Given text is either too small or too long";
       } else if (type === "email") {
         return "Please supply a valid e-mail";
+      } else if (type === "username") {
+        return "Given text is not an username";
       }
-      throw Error("Unsupported rule=" + type);
+      throw Error("Cannot create text for rule=" + type);
     },
 
     /**
@@ -127,7 +129,6 @@ define(["json!rules", "class", "validateCore", "validateRules"], function (Rules
         }
         if (type === "err") {
           if (item.className.indexOf("help-block") != -1) {
-            console.log(item, result);
             item.innerHTML += _methods.createText(result.value, result.rule) + "<br>";
           }
           Class.del(item, "hidden");
