@@ -1,0 +1,8 @@
+{
+  "login": {
+    "email": "email, len(min=10|max=255), reqif(role=customer)",
+    "pass": "len(min=4|max=255)",
+    "role": "ascii, len(min=5|max=8)",
+    "ldap": "username, len(min=2|max=10), reqif(role=admin)"
+  }
+}
