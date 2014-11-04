@@ -202,15 +202,16 @@ define([], function() {
                       rule: ruleName,
                       value: cmpName + "=" + cmpVal
                     });
-                  } else {
-                    var other = input[cmpName];
-                    if (other !== value) {
-                      // Break here, reqif is not the case
-                      _methods.log(
-                        "Ignoring reqif value not equals of %s", ruleName
-                      );
-                      ignore = true;
-                    }
+                    return;
+                  }
+
+                  var other = input[cmpName];
+                  if (other !== cmpVal) {
+                    // Break here, reqif is not the case
+                    _methods.log(
+                      "Ignoring reqif value not equals of %s", ruleName
+                    );
+                    ignore = true;
                   }
                 });
               }
