@@ -89,7 +89,9 @@ define(["./core", "xregexp"], function (Validate, XReg) {
   });
   Validate.addValidator("len", function (value, rules) {
     var ok = 1;
-    ok &= typeof value === 'string';
+    if (typeof value !== 'string') {
+      return false;
+    }
 
     if (rules.hasOwnProperty('max')) {
       ok &= value.length <= rules.max;
@@ -98,6 +100,14 @@ define(["./core", "xregexp"], function (Validate, XReg) {
       ok &= value.length >= rules.min;
     }
     return ok === 1;
+  });
+  Validate.addValidator("enum", function (value, rules) {
+    for (var key in rules) {
+      if (rules.hasOwnProperty(key) && value === rules[key]) {
+        return true;
+      }
+    }
+    return false;
   });
   Validate.addValidator("country", function (value) {
     return typeof value === 'string' && value.length === 2 && /^[a-zA-Z]{2}$/.test(value);
