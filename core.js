@@ -112,7 +112,7 @@ define([], function() {
             var sep = item.indexOf("=");
             if (sep < 0) {
               errors.push({
-                fieldName: ruleName,
+                fieldName: rule,
                 reason: "Failed extracting rule key=value",
                 rule: item,
                 value: null
