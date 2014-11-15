@@ -122,7 +122,13 @@ define([], function() {
             var key = item.substr(0, sep);
             var value = item.substr(sep + 1);
             if (args.hasOwnProperty(key)) {
-              throw "Weird error, duplicate key=" + key;
+              errors.push({
+                fieldName: rule,
+                reason: "In rule(key=) I've found the same key twice",
+                rule: item,
+                value: value
+              });
+              return;
             }
             args[key] = value;
           });
@@ -170,7 +176,7 @@ define([], function() {
           });
           _methods.forEach(v[0], function (ruleName, rule) {
             // Regular validator
-            if (ruleName === "opt" || ruleName === "reqif") {
+            if (ruleName === "opt" || ruleName === "reqif" || ruleName == "onlyif") {
               // No validator so skip (will be used when invalid input)
               return;
             }
@@ -184,7 +190,19 @@ define([], function() {
               return;
             }
             var value = input[fieldName];
-            if ((value === null || value === "") && v[0].hasOwnProperty("opt")) {
+            if (v[0].hasOwnProperty("onlyif")) {
+              if (value !== null && value.length > 0) {
+                errors.push({
+                  fieldName: fieldName,
+                  reason: "onlyif rule while field has value",
+                  rule: ruleName,
+                  value: value
+                });
+                return;
+              } else {
+                // onlyif set and it's empty
+              }
+            } else if ((value === null || value === "") && v[0].hasOwnProperty("opt")) {
               _methods.log(
                 "Ignoring content of %s", ruleName
               );
