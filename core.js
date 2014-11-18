@@ -151,7 +151,7 @@ define([], function() {
           var subFields = input[fieldName];
           if (subFields.hasOwnProperty('length')) {
             // Array children
-            _methods.forEach(subFields, function (_, value) {
+            _methods.forEach(subFields, function (fieldName, value) {
               _methods.log(
                 "Validating field (%s) children recursive",
                 fieldName
@@ -163,9 +163,21 @@ define([], function() {
             });
           } else {
             // Regular data
-            var e = _methods.contentValidate(subFields, validators);
-            if (e.length > 0) {
-              errors = errors.concat(e);
+
+            if (typeof validators["@array"] !== "undefined") {
+              _methods.forEach(subFields, function (_, val) {
+                delete validators["@array"];
+                var e = _methods.contentValidate(val, validators);
+                if (e.length > 0) {
+                  errors = errors.concat(e);
+                }
+              });
+
+            } else {
+              var e = _methods.contentValidate(subFields, validators);
+              if (e.length > 0) {
+                errors = errors.concat(e);
+              }
             }
           }
         } else {
