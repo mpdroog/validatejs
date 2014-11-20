@@ -110,14 +110,7 @@ define(["./core", "xregexp"], function (Validate, XReg) {
     return false;
   });
   Validate.addValidator("base64", function (value, rules) {
-    var ok = /^[-a-zA-Z0-9=_]+$/.test(value);
-    if (rules.hasOwnProperty('max')) {
-      ok &= value.length <= rules.max;
-    }
-    if (rules.hasOwnProperty('min')) {
-      ok &= value.length >= rules.min;
-    }
-    return ok === 1;
+    return /^[-a-zA-Z0-9=_]+$/.test(value);
   });
   Validate.addValidator("country", function (value) {
     return typeof value === 'string' && value.length === 2 && /^[a-zA-Z]{2}$/.test(value);
