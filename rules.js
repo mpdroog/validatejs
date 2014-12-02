@@ -22,11 +22,9 @@ define(["./core", "xregexp"], function (Validate, XReg) {
   });
   Validate.addValidator("emails", function(values) {
     var ok = 1;
-    for (var key in values.split(",")) {
-      if (! values.hasOwnProperty(key)) {
-        continue;
-      }
-      ok &= emailRegexp.test(values[key]);
+    values = values.split(",");
+    for (var i = 0; i < values.length; i++) {
+      ok &= emailRegexp.test(values[i]);
     }
     return ok === 1;
   });
