@@ -15,8 +15,20 @@ define(["./core", "xregexp"], function (Validate, XReg) {
    * E-mail validator.
    * @see http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
    */
+  var emailRegexp = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
   Validate.addValidator("email", function (value) {
-    return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(value);
+    return emailRegexp.test(value);
+  });
+  Validate.addValidator("emails", function(values) {
+    var ok = 1;
+    for (var key in values.split(",")) {
+      if (! values.hasOwnProperty(key)) {
+        continue;
+      }
+      ok &= emailRegexp.test(values[key]);
+    }
+    return ok === 1;
   });
 
   /**
@@ -110,7 +122,14 @@ define(["./core", "xregexp"], function (Validate, XReg) {
     return false;
   });
   Validate.addValidator("base64", function (value, rules) {
-    return /^[-a-zA-Z0-9=_]+$/.test(value);
+    var ok = /^[-a-zA-Z0-9=_]+$/.test(value);
+    if (rules.hasOwnProperty('max')) {
+      ok &= value.length <= rules.max;
+    }
+    if (rules.hasOwnProperty('min')) {
+      ok &= value.length >= rules.min;
+    }
+    return ok === 1;
   });
   Validate.addValidator("country", function (value) {
     return typeof value === 'string' && value.length === 2 && /^[a-zA-Z]{2}$/.test(value);
